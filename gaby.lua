@@ -39,7 +39,11 @@ UIStrokeMain.Parent = MainFrame
 -- Função para controlar o estado do Mouse junto com o Menu
 local function setMenuVisible(visible)
     MainFrame.Visible = visible
-    UserInputService.MouseBehavior = visible and Enum.MouseBehavior.Default | Enum.MouseBehavior.LockCenter
+    if visible then
+        UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+    else
+        UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+    end
     pcall(function()
         UserInputService.ModalEnabled = visible
     end)
@@ -576,7 +580,7 @@ task.spawn(function()
     end
 end)
 
--- [NOVO] ESP DE GERADORES INTELIGENTE (VIOLENCE DISTRICT)
+-- ESP DE GERADORES INTELIGENTE (VIOLENCE DISTRICT)
 local generatorEspState = false
 createToggle(pageVisual, "ESP Geradores", function(state)
     generatorEspState = state
@@ -593,7 +597,6 @@ task.spawn(function()
     while true do
         if generatorEspState then
             for _, obj in pairs(Workspace:GetDescendants()) do
-                -- Varredura inteligente procurando partes de gerador ou prompts de reparo
                 local isGenerator = false
                 if obj:IsA("Model") then
                     local nameLower = string.lower(obj.Name)
@@ -612,7 +615,7 @@ task.spawn(function()
                 if isGenerator and not obj:FindFirstChild("GabyGeneratorESP") then
                     local hl = Instance.new("Highlight")
                     hl.Name = "GabyGeneratorESP"
-                    hl.FillColor = Color3.fromRGB(255, 140, 0) -- Laranja forte de gerador
+                    hl.FillColor = Color3.fromRGB(255, 140, 0)
                     hl.OutlineColor = Color3.fromRGB(255, 255, 255)
                     hl.Parent = obj
                     
@@ -638,7 +641,6 @@ task.spawn(function()
                     end
                 end
                 
-                -- Atualizar Distância do Gerador
                 local bg = obj:FindFirstChild("GabyGeneratorName")
                 local primaryPart = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
                 local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
