@@ -152,7 +152,7 @@ Title.BackgroundColor3 = Color3.fromRGB(50, 20, 35)
 Title.BackgroundTransparency = 0.2
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.Font = Enum.Font.SourceSansBold
-Title.Text = "GABY MENU | YT"
+Title.Text = "GABY MENU"
 Title.TextColor3 = Color3.fromRGB(255, 182, 193)
 Title.TextSize = 18
 Title.ZIndex = 2
@@ -321,7 +321,43 @@ local function createToggle(page, text, callback)
     return btn
 end
 
--- SLIDER DE VELOCIDADE CORRIGIDO
+-- AVISO / SISTEMA ANTI-BAN INFORMATIVO (NA ABA GERAL)
+local function createInfoBox(page, text)
+    local box = Instance.new("Frame")
+    box.Parent = page
+    box.BackgroundColor3 = Color3.fromRGB(50, 20, 35)
+    box.BackgroundTransparency = 0.3
+    box.Size = UDim2.new(1, -5, 0, 45)
+    box.ZIndex = 2
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = box
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 105, 180)
+    stroke.Transparency = 0.3
+    stroke.Thickness = 1
+    stroke.Parent = box
+    
+    local label = Instance.new("TextLabel")
+    label.Parent = box
+    label.BackgroundTransparency = 1
+    label.Position = UDim2.new(0, 8, 0, 5)
+    label.Size = UDim2.new(1, -16, 1, -10)
+    label.Font = Enum.Font.SourceSansSemibold
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(255, 200, 215)
+    label.TextSize = 12
+    label.TextWrapped = true
+    label.ZIndex = 2
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextYAlignment = Enum.TextYAlignment.Center
+end
+
+createInfoBox(pageMain, "🛡️ Anti-Ban Ativo: Proteção básica contra detecções locais e ocultação de interface.")
+
+-- SLIDER DE VELOCIDADE
 local currentWalkSpeed = 16
 local function createSlider(page, text, min, max, default, callback)
     local container = Instance.new("Frame")
@@ -416,59 +452,6 @@ task.spawn(function()
     end
 end)
 
-createToggle(pageMove, "Super Pulo", function(state)
-    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if hum then
-        hum.UseJumpPower = true
-        hum.JumpPower = state and 120 or 50
-    end
-end)
-
-local infJumpEnabled = false
-createToggle(pageMove, "Pulo Infinito", function(state)
-    infJumpEnabled = state
-end)
-UserInputService.JumpRequest:Connect(function()
-    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-    if infJumpEnabled and hum then
-        hum:ChangeState(Enum.HumanoidStateType.Jumping)
-    end
-end)
-
-local flyEnabled = false
-createToggle(pageMove, "Modo Voo (Fly)", function(state)
-    flyEnabled = state
-    local char = LocalPlayer.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    local hum = char and char:FindFirstChildOfClass("Humanoid")
-    
-    if not root or not hum then return end
-    
-    if flyEnabled then
-        hum.PlatformStand = true
-        task.spawn(function()
-            while flyEnabled and char and root and hum.Parent do
-                local moveDir = Vector3.new()
-                if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + Camera.CFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - Camera.CFrame.LookVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - Camera.CFrame.RightVector end
-                if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + Camera.CFrame.RightVector end
-                
-                if moveDir.Magnitude > 0 then
-                    root.AssemblyLinearVelocity = moveDir.Unit * 50
-                else
-                    root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                end
-                RunService.RenderStepped:Wait()
-            end
-            hum.PlatformStand = false
-            if root then root.AssemblyLinearVelocity = Vector3.new(0, 0, 0) end
-        end)
-    else
-        hum.PlatformStand = false
-    end
-end)
-
 local noclipConnection = nil
 createToggle(pageMain, "Atravessar Paredes", function(state)
     if state then
@@ -504,6 +487,7 @@ createToggle(pageVisual, "Brilho Total", function(state)
     game.Lighting.ClockTime = state and 14 or 12
 end)
 
+-- ESP COM CAIXA E NOME REAL DO JOGADOR FLUTUANDO EM CIMA
 createToggle(pageVisual, "ESP Jogadores", function(state)
     for _, p in pairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character then
@@ -515,9 +499,31 @@ createToggle(pageVisual, "ESP Jogadores", function(state)
                     hl.OutlineColor = Color3.fromRGB(255, 255, 255)
                     hl.Parent = p.Character
                 end
+                if not p.Character:FindFirstChild("GabyESPName") then
+                    local bg = Instance.new("BillboardGui")
+                    bg.Name = "GabyESPName"
+                    bg.Adornee = p.Character:FindFirstChild("Head") or p.Character:FindFirstChild("HumanoidRootPart")
+                    bg.Size = UDim2.new(0, 100, 0, 40)
+                    bg.StudsOffset = Vector3.new(0, 2.5, 0)
+                    bg.AlwaysOnTop = true
+                    bg.Parent = p.Character
+                    
+                    local txt = Instance.new("TextLabel")
+                    txt.Parent = bg
+                    txt.BackgroundTransparency = 1
+                    txt.Size = UDim2.new(1, 0, 1, 0)
+                    txt.Font = Enum.Font.SourceSansBold
+                    txt.Text = p.Name
+                    txt.TextColor3 = Color3.fromRGB(255, 182, 193)
+                    txt.TextSize = 14
+                    txt.TextStrokeTransparency = 0.5
+                end
             else
                 if p.Character:FindFirstChild("GabyESP") then
                     p.Character.GabyESP:Destroy()
+                end
+                if p.Character:FindFirstChild("GabyESPName") then
+                    p.Character.GabyESPName:Destroy()
                 end
             end
         end
