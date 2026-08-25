@@ -285,7 +285,7 @@ local function createToggle(page, text, callback)
     return btn
 end
 
--- ==================== [NOVO: PASSO 2] SLIDER DE VELOCIDADE (0 a 100) ====================
+-- SLIDER DE VELOCIDADE
 local function createSlider(page, text, min, max, default, callback)
     local container = Instance.new("Frame")
     container.Parent = page
@@ -426,26 +426,35 @@ createToggle(pageMove, "Modo Voo (Fly)", function(state)
     end
 end)
 
--- ==================== [NOVO: PASSO 1] CORREÇÃO DO ATRAVESSAR PAREDES (NOCLIP) ====================
+-- [CORRIGIDO] ATRAVESSAR PAREDES (NOCLIP COM RESTAURAÇÃO IMEDIATA)
+local noclipConnection = nil
 createToggle(pageMain, "Atravessar Paredes", function(state)
-    task.spawn(function()
-        while state do
+    if state then
+        noclipConnection = RunService.Stepped:Connect(function()
             local char = LocalPlayer.Character
             if char then
                 for _, part in pairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") then part.CanCollide = false end
+                    if part:IsA("BasePart") then 
+                        part.CanCollide = false 
+                    end
                 end
             end
-            RunService.Stepped:Wait()
+        end)
+    else
+        if noclipConnection then
+            noclipConnection:Disconnect()
+            noclipConnection = nil
         end
-        -- Quando desliga, devolve a colisão real para o personagem
+        -- Devolve a colisão real instantaneamente para o personagem
         local char = LocalPlayer.Character
         if char then
             for _, part in pairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then part.CanCollide = true end
+                if part:IsA("BasePart") then 
+                    part.CanCollide = true 
+                end
             end
         end
-    end)
+    end
 end)
 
 createToggle(pageVisual, "Brilho Total", function(state)
