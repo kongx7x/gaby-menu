@@ -39,8 +39,7 @@ UIStrokeMain.Parent = MainFrame
 -- Função para controlar o estado do Mouse junto com o Menu
 local function setMenuVisible(visible)
     MainFrame.Visible = visible
-    UserInputService.MouseBehavior = visible and Enum.MouseBehavior.Default or Enum.MouseBehavior.LockCenter
-    -- Dependendo do executor, o MouseIconEnabled pode variar, mas isso força a liberação do mouse
+    UserInputService.MouseBehavior = visible and Enum.MouseBehavior.Default | Enum.MouseBehavior.LockCenter
     pcall(function()
         UserInputService.ModalEnabled = visible
     end)
@@ -491,7 +490,7 @@ createToggle(pageMain, "Atravessar Paredes", function(state)
     end
 end)
 
--- BRILHO TOTAL PERSISTENTE (MONITORADO CONTINUAMENTE)
+-- BRILHO TOTAL PERSISTENTE
 local brightState = false
 createToggle(pageVisual, "Brilho Total", function(state)
     brightState = state
@@ -512,7 +511,7 @@ task.spawn(function()
     end
 end)
 
--- ESP COM NOME REAL + DISTÂNCIA PERSISTENTE
+-- ESP JOGADORES PERSISTENTE COM DISTÂNCIA
 local espState = false
 createToggle(pageVisual, "ESP Jogadores", function(state)
     espState = state
@@ -577,6 +576,85 @@ task.spawn(function()
     end
 end)
 
+-- [NOVO] ESP DE GERADORES INTELIGENTE (VIOLENCE DISTRICT)
+local generatorEspState = false
+createToggle(pageVisual, "ESP Geradores", function(state)
+    generatorEspState = state
+    if not state then
+        for _, obj in pairs(Workspace:GetDescendants()) do
+            if obj.Name == "GabyGeneratorESP" or obj.Name == "GabyGeneratorName" then
+                obj:Destroy()
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if generatorEspState then
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                -- Varredura inteligente procurando partes de gerador ou prompts de reparo
+                local isGenerator = false
+                if obj:IsA("Model") then
+                    local nameLower = string.lower(obj.Name)
+                    if string.find(nameLower, "generator") or string.find(nameLower, "motor") or string.find(nameLower, "machine") then
+                        isGenerator = true
+                    else
+                        for _, child in pairs(obj:GetDescendants()) do
+                            if child:IsA("ProximityPrompt") and string.find(string.lower(child.ActionText), "reparar") then
+                                isGenerator = true
+                                break
+                            end
+                        end
+                    end
+                end
+                
+                if isGenerator and not obj:FindFirstChild("GabyGeneratorESP") then
+                    local hl = Instance.new("Highlight")
+                    hl.Name = "GabyGeneratorESP"
+                    hl.FillColor = Color3.fromRGB(255, 140, 0) -- Laranja forte de gerador
+                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    hl.Parent = obj
+                    
+                    local primaryPart = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                    if primaryPart then
+                        local bg = Instance.new("BillboardGui")
+                        bg.Name = "GabyGeneratorName"
+                        bg.Adornee = primaryPart
+                        bg.Size = UDim2.new(0, 120, 0, 40)
+                        bg.StudsOffset = Vector3.new(0, 3, 0)
+                        bg.AlwaysOnTop = true
+                        bg.Parent = obj
+                        
+                        local txt = Instance.new("TextLabel")
+                        txt.Name = "Text"
+                        txt.Parent = bg
+                        txt.BackgroundTransparency = 1
+                        txt.Size = UDim2.new(1, 0, 1, 0)
+                        txt.Font = Enum.Font.SourceSansBold
+                        txt.TextColor3 = Color3.fromRGB(255, 165, 0)
+                        txt.TextSize = 14
+                        txt.TextStrokeTransparency = 0.5
+                    end
+                end
+                
+                -- Atualizar Distância do Gerador
+                local bg = obj:FindFirstChild("GabyGeneratorName")
+                local primaryPart = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
+                local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if bg and primaryPart and localRoot then
+                    local dist = math.floor((primaryPart.Position - localRoot.Position).Magnitude)
+                    local txt = bg:FindFirstChild("Text")
+                    if txt then
+                        txt.Text = "Gerador [" .. dist .. "m]"
+                    end
+                end
+            end
+        end
+        task.wait(1)
+    end
+end)
+
 createToggle(pageMain, "Vida Infinita (Godmode)", function(state)
     task.spawn(function()
         while state do
@@ -633,14 +711,12 @@ Players.PlayerAdded:Connect(refreshPlayerList)
 Players.PlayerRemoving:Connect(refreshPlayerList)
 refreshPlayerList()
 
--- Atalho RightShift com liberação de mouse
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
         setMenuVisible(not MainFrame.Visible)
     end
 end)
 
--- Sistema anti-conflito para arrastar vs tocar no celular
 local dragging = false
 local dragInput, dragStart, startPos
 local touchMoved = false
