@@ -172,7 +172,7 @@ TabBar.Parent = MainFrame
 TabBar.BackgroundColor3 = Color3.fromRGB(30, 15, 25)
 TabBar.BackgroundTransparency = 0.4
 TabBar.Position = UDim2.new(0, 10, 0, 50)
-TabBar.Size = UDim2.new(0, 110, 1, -100) -- Ajustado para dar espaço ao perfil embaixo
+TabBar.Size = UDim2.new(0, 110, 1, -100)
 TabBar.ZIndex = 2
 
 local UICornerTab = Instance.new("UICorner")
@@ -185,7 +185,7 @@ TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TabListLayout.Padding = UDim.new(0, 5)
 TabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- ==================== [NOVO: PASSO 5] PERFIL DO USUÁRIO NO MENU ====================
+-- Perfil do Usuário
 local UserProfileFrame = Instance.new("Frame")
 UserProfileFrame.Parent = MainFrame
 UserProfileFrame.BackgroundColor3 = Color3.fromRGB(30, 15, 25)
@@ -321,7 +321,8 @@ local function createToggle(page, text, callback)
     return btn
 end
 
--- SLIDER DE VELOCIDADE
+-- SLIDER DE VELOCIDADE ATUALIZADO (FUNCIONA NO LOBBY E NA PARTIDA)
+local currentWalkSpeed = 16
 local function createSlider(page, text, min, max, default, callback)
     local container = Instance.new("Frame")
     container.Parent = page
@@ -391,7 +392,9 @@ local function createSlider(page, text, min, max, default, callback)
             local pos = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
             fill.Size = UDim2.new(pos, 0, 1, 0)
             local val = math.floor(min + ((max - min) * pos))
+            label.Text = text .. ": " + val -- Ajuste simples para manter compatibilidade
             label.Text = text .. ": " .. val
+            currentWalkSpeed = val
             callback(val)
         end
     end)
@@ -400,13 +403,19 @@ end
 -- ==================== SISTEMAS ====================
 
 createSlider(pageMove, "Velocidade", 16, 100, 16, function(value)
-    task.spawn(function()
+    currentWalkSpeed = value
+end)
+
+-- Loop constante que garante velocidade no lobby E dentro da partida (mesmo ao dar respawn)
+task.spawn(function()
+    while true do
         local char = LocalPlayer.Character
         local hum = char and char:FindFirstChildOfClass("Humanoid")
-        if hum then
-            hum.WalkSpeed = value
+        if hum and currentWalkSpeed > 16 then
+            hum.WalkSpeed = currentWalkSpeed
         end
-    end)
+        RunService.RenderStepped:Wait()
+    end
 end)
 
 createToggle(pageMove, "Super Pulo", function(state)
@@ -545,6 +554,7 @@ local function refreshPlayerList()
             tpBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 30)
             tpBtn.Size = UDim2.new(1, -5, 0, 35)
             tpBtn.Font = Enum.Font.SourceSansSemibold
+            tpBtn.Text = "Teleportar para: " + p.Name
             tpBtn.Text = "Teleportar para: " .. p.Name
             tpBtn.TextColor3 = Color3.fromRGB(255, 220, 230)
             tpBtn.TextSize = 13
@@ -573,14 +583,12 @@ Players.PlayerAdded:Connect(refreshPlayerList)
 Players.PlayerRemoving:Connect(refreshPlayerList)
 refreshPlayerList()
 
--- ==================== [NOVO: PASSO 4] TECLA DE ATALHO (RIGHT SHIFT) ====================
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
         MainFrame.Visible = not MainFrame.Visible
     end
 end)
 
--- Sistema anti-conflito para arrastar vs tocar no celular
 local dragging = false
 local dragInput, dragStart, startPos
 local touchMoved = false
