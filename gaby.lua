@@ -321,7 +321,7 @@ local function createToggle(page, text, callback)
     return btn
 end
 
--- SLIDER DE VELOCIDADE ATUALIZADO (FUNCIONA NO LOBBY E NA PARTIDA)
+-- SLIDER DE VELOCIDADE CORRIGIDO
 local currentWalkSpeed = 16
 local function createSlider(page, text, min, max, default, callback)
     local container = Instance.new("Frame")
@@ -392,7 +392,6 @@ local function createSlider(page, text, min, max, default, callback)
             local pos = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
             fill.Size = UDim2.new(pos, 0, 1, 0)
             local val = math.floor(min + ((max - min) * pos))
-            label.Text = text .. ": " + val -- Ajuste simples para manter compatibilidade
             label.Text = text .. ": " .. val
             currentWalkSpeed = val
             callback(val)
@@ -406,7 +405,6 @@ createSlider(pageMove, "Velocidade", 16, 100, 16, function(value)
     currentWalkSpeed = value
 end)
 
--- Loop constante que garante velocidade no lobby E dentro da partida (mesmo ao dar respawn)
 task.spawn(function()
     while true do
         local char = LocalPlayer.Character
@@ -554,7 +552,6 @@ local function refreshPlayerList()
             tpBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 30)
             tpBtn.Size = UDim2.new(1, -5, 0, 35)
             tpBtn.Font = Enum.Font.SourceSansSemibold
-            tpBtn.Text = "Teleportar para: " + p.Name
             tpBtn.Text = "Teleportar para: " .. p.Name
             tpBtn.TextColor3 = Color3.fromRGB(255, 220, 230)
             tpBtn.TextSize = 13
