@@ -36,6 +36,16 @@ UIStrokeMain.Color = Color3.fromRGB(255, 105, 180)
 UIStrokeMain.Thickness = 2
 UIStrokeMain.Parent = MainFrame
 
+-- Função para controlar o estado do Mouse junto com o Menu
+local function setMenuVisible(visible)
+    MainFrame.Visible = visible
+    UserInputService.MouseBehavior = visible and Enum.MouseBehavior.Default or Enum.MouseBehavior.LockCenter
+    -- Dependendo do executor, o MouseIconEnabled pode variar, mas isso força a liberação do mouse
+    pcall(function()
+        UserInputService.ModalEnabled = visible
+    end)
+end
+
 -- Botão Flutuante
 local ToggleButton = Instance.new("ImageButton")
 ToggleButton.Name = "ToggleButton"
@@ -152,7 +162,7 @@ Title.BackgroundColor3 = Color3.fromRGB(50, 20, 35)
 Title.BackgroundTransparency = 0.2
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.Font = Enum.Font.SourceSansBold
-Title.Text = "GABY MENU"
+Title.Text = "GABY MENU | YT"
 Title.TextColor3 = Color3.fromRGB(255, 182, 193)
 Title.TextSize = 18
 Title.ZIndex = 2
@@ -321,7 +331,7 @@ local function createToggle(page, text, callback)
     return btn
 end
 
--- AVISO / SISTEMA ANTI-BAN INFORMATIVO (NA ABA GERAL)
+-- AVISO ANTI-BAN INFORMATIVO
 local function createInfoBox(page, text)
     local box = Instance.new("Frame")
     box.Parent = page
@@ -481,52 +491,89 @@ createToggle(pageMain, "Atravessar Paredes", function(state)
     end
 end)
 
+-- BRILHO TOTAL PERSISTENTE (MONITORADO CONTINUAMENTE)
+local brightState = false
 createToggle(pageVisual, "Brilho Total", function(state)
-    game.Lighting.Brightness = state and 2 or 1
-    game.Lighting.GlobalShadows = not state
-    game.Lighting.ClockTime = state and 14 or 12
+    brightState = state
 end)
 
--- ESP COM CAIXA E NOME REAL DO JOGADOR FLUTUANDO EM CIMA
+task.spawn(function()
+    while true do
+        if brightState then
+            game.Lighting.Brightness = 2
+            game.Lighting.GlobalShadows = false
+            game.Lighting.ClockTime = 14
+        else
+            game.Lighting.Brightness = 1
+            game.Lighting.GlobalShadows = true
+            game.Lighting.ClockTime = 12
+        end
+        task.wait(1)
+    end
+end)
+
+-- ESP COM NOME REAL + DISTÂNCIA PERSISTENTE
+local espState = false
 createToggle(pageVisual, "ESP Jogadores", function(state)
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            if state then
-                if not p.Character:FindFirstChild("GabyESP") then
-                    local hl = Instance.new("Highlight")
-                    hl.Name = "GabyESP"
-                    hl.FillColor = Color3.fromRGB(255, 105, 180)
-                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    hl.Parent = p.Character
-                end
-                if not p.Character:FindFirstChild("GabyESPName") then
-                    local bg = Instance.new("BillboardGui")
-                    bg.Name = "GabyESPName"
-                    bg.Adornee = p.Character:FindFirstChild("Head") or p.Character:FindFirstChild("HumanoidRootPart")
-                    bg.Size = UDim2.new(0, 100, 0, 40)
-                    bg.StudsOffset = Vector3.new(0, 2.5, 0)
-                    bg.AlwaysOnTop = true
-                    bg.Parent = p.Character
+    espState = state
+    if not state then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p.Character then
+                if p.Character:FindFirstChild("GabyESP") then p.Character.GabyESP:Destroy() end
+                if p.Character:FindFirstChild("GabyESPName") then p.Character.GabyESPName:Destroy() end
+            end
+        end
+    end
+end)
+
+task.spawn(function()
+    while true do
+        if espState then
+            for _, p in pairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character then
+                    local root = p.Character:FindFirstChild("HumanoidRootPart")
+                    local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                     
-                    local txt = Instance.new("TextLabel")
-                    txt.Parent = bg
-                    txt.BackgroundTransparency = 1
-                    txt.Size = UDim2.new(1, 0, 1, 0)
-                    txt.Font = Enum.Font.SourceSansBold
-                    txt.Text = p.Name
-                    txt.TextColor3 = Color3.fromRGB(255, 182, 193)
-                    txt.TextSize = 14
-                    txt.TextStrokeTransparency = 0.5
-                end
-            else
-                if p.Character:FindFirstChild("GabyESP") then
-                    p.Character.GabyESP:Destroy()
-                end
-                if p.Character:FindFirstChild("GabyESPName") then
-                    p.Character.GabyESPName:Destroy()
+                    if not p.Character:FindFirstChild("GabyESP") then
+                        local hl = Instance.new("Highlight")
+                        hl.Name = "GabyESP"
+                        hl.FillColor = Color3.fromRGB(255, 105, 180)
+                        hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                        hl.Parent = p.Character
+                    end
+                    
+                    local bg = p.Character:FindFirstChild("GabyESPName")
+                    if not bg then
+                        bg = Instance.new("BillboardGui")
+                        bg.Name = "GabyESPName"
+                        bg.Adornee = p.Character:FindFirstChild("Head") or root
+                        bg.Size = UDim2.new(0, 120, 0, 40)
+                        bg.StudsOffset = Vector3.new(0, 2.5, 0)
+                        bg.AlwaysOnTop = true
+                        bg.Parent = p.Character
+                        
+                        local txt = Instance.new("TextLabel")
+                        txt.Name = "Text"
+                        txt.Parent = bg
+                        txt.BackgroundTransparency = 1
+                        txt.Size = UDim2.new(1, 0, 1, 0)
+                        txt.Font = Enum.Font.SourceSansBold
+                        txt.TextColor3 = Color3.fromRGB(255, 182, 193)
+                        txt.TextSize = 14
+                        txt.TextStrokeTransparency = 0.5
+                    end
+                    
+                    if bg and root and localRoot then
+                        local dist = math.floor((root.Position - localRoot.Position).Magnitude)
+                        local txt = bg:FindFirstChild("Text")
+                        if txt then
+                            txt.Text = p.Name .. " [" .. dist .. "m]"
+                        end
+                    end
                 end
             end
         end
+        task.wait(0.2)
     end
 end)
 
@@ -586,12 +633,14 @@ Players.PlayerAdded:Connect(refreshPlayerList)
 Players.PlayerRemoving:Connect(refreshPlayerList)
 refreshPlayerList()
 
+-- Atalho RightShift com liberação de mouse
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
-        MainFrame.Visible = not MainFrame.Visible
+        setMenuVisible(not MainFrame.Visible)
     end
 end)
 
+-- Sistema anti-conflito para arrastar vs tocar no celular
 local dragging = false
 local dragInput, dragStart, startPos
 local touchMoved = false
@@ -629,12 +678,12 @@ end)
 
 ToggleButton.MouseButton1Up:Connect(function()
     if not touchMoved then
-        MainFrame.Visible = not MainFrame.Visible
+        setMenuVisible(not MainFrame.Visible)
     end
 end)
 
 ToggleButton.TouchEnded:Connect(function()
     if not touchMoved then
-        MainFrame.Visible = not MainFrame.Visible
+        setMenuVisible(not MainFrame.Visible)
     end
 end)
