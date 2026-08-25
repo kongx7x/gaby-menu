@@ -534,20 +534,37 @@ end)
 -- ====== INÍCIO SISTEMA DE BRILHO TOTAL (FULLBRIGHT) ==========================
 -- ==============================================================================
 local brightState = false
+local originalBrightness = game.Lighting.Brightness
+local originalShadows = game.Lighting.GlobalShadows
+local originalClockTime = game.Lighting.ClockTime
+local originalOutdoorAmbient = game.Lighting.OutdoorAmbient
+
 createToggle(pageVisual, "Brilho Total", function(state)
     brightState = state
+    if state then
+        -- Salva os valores originais do mapa antes de alterar
+        originalBrightness = game.Lighting.Brightness
+        originalShadows = game.Lighting.GlobalShadows
+        originalClockTime = game.Lighting.ClockTime
+        originalOutdoorAmbient = game.Lighting.OutdoorAmbient
+    else
+        -- Restaura exatamente como o mapa era antes de ligar
+        game.Lighting.Brightness = originalBrightness
+        game.Lighting.GlobalShadows = originalShadows
+        game.Lighting.ClockTime = originalClockTime
+        game.Lighting.OutdoorAmbient = originalOutdoorAmbient
+    end
 end)
 
 task.spawn(function()
     while true do
         if brightState then
-            game.Lighting.Brightness = 2
-            game.Lighting.GlobalShadows = false
-            game.Lighting.ClockTime = 14
-        else
-            game.Lighting.Brightness = 1
-            game.Lighting.GlobalShadows = true
-            game.Lighting.ClockTime = 12
+            pcall(function()
+                game.Lighting.Brightness = 2
+                game.Lighting.GlobalShadows = false
+                game.Lighting.ClockTime = 14
+                game.Lighting.OutdoorAmbient = Color3.fromRGB(200, 200, 200)
+            end)
         end
         task.wait(1)
     end
