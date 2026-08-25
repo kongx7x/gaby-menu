@@ -1,3 +1,6 @@
+-- ==============================================================================
+-- ====== INÍCIO DA CONFIGURAÇÃO E VARIÁVEIS GLOBAIS ============================
+-- ==============================================================================
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -36,7 +39,6 @@ UIStrokeMain.Color = Color3.fromRGB(255, 105, 180)
 UIStrokeMain.Thickness = 2
 UIStrokeMain.Parent = MainFrame
 
--- Função para controlar o estado do Mouse junto com o Menu
 local function setMenuVisible(visible)
     MainFrame.Visible = visible
     if visible then
@@ -48,8 +50,14 @@ local function setMenuVisible(visible)
         UserInputService.ModalEnabled = visible
     end)
 end
+-- ==============================================================================
+-- ====== FIM DA CONFIGURAÇÃO E VARIÁVEIS GLOBAIS ==============================
+-- ==============================================================================
 
--- Botão Flutuante
+
+-- ==============================================================================
+-- ====== INÍCIO DO DESIGN E INTERFACE (MENU VISUAL) ============================
+-- ==============================================================================
 local ToggleButton = Instance.new("ImageButton")
 ToggleButton.Name = "ToggleButton"
 ToggleButton.Parent = ScreenGui
@@ -68,7 +76,6 @@ UIStrokeBtn.Color = Color3.fromRGB(255, 20, 147)
 UIStrokeBtn.Thickness = 2
 UIStrokeBtn.Parent = ToggleButton
 
--- Imagem de Fundo
 local BackgroundImage = Instance.new("ImageLabel")
 BackgroundImage.Parent = MainFrame
 BackgroundImage.BackgroundTransparency = 1
@@ -81,7 +88,7 @@ local UICornerBg = Instance.new("UICorner")
 UICornerBg.CornerRadius = UDim.new(0, 12)
 UICornerBg.Parent = BackgroundImage
 
--- Efeito 3D Teia de Aranha
+-- Efeito Teia de Aranha
 local WebContainer = Instance.new("Folder")
 WebContainer.Name = "WebEffect"
 WebContainer.Parent = MainFrame
@@ -158,7 +165,6 @@ task.spawn(function()
     end
 end)
 
--- Título
 local Title = Instance.new("TextLabel")
 Title.Parent = MainFrame
 Title.BackgroundColor3 = Color3.fromRGB(50, 20, 35)
@@ -179,7 +185,7 @@ UIStrokeTitle.Color = Color3.fromRGB(255, 105, 180)
 UIStrokeTitle.Thickness = 1
 UIStrokeTitle.Parent = Title
 
--- Container de Abas
+-- Container de Abas e Perfil
 local TabBar = Instance.new("Frame")
 TabBar.Parent = MainFrame
 TabBar.BackgroundColor3 = Color3.fromRGB(30, 15, 25)
@@ -198,7 +204,6 @@ TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TabListLayout.Padding = UDim.new(0, 5)
 TabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- Perfil do Usuário
 local UserProfileFrame = Instance.new("Frame")
 UserProfileFrame.Parent = MainFrame
 UserProfileFrame.BackgroundColor3 = Color3.fromRGB(30, 15, 25)
@@ -234,7 +239,6 @@ UserNameLabel.ZIndex = 2
 UserNameLabel.TextXAlignment = Enum.TextXAlignment.Left
 UserNameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 
--- Container de Páginas
 local ContentArea = Instance.new("Frame")
 ContentArea.Parent = MainFrame
 ContentArea.BackgroundTransparency = 1
@@ -302,6 +306,15 @@ createTabButton("Movimento", pageMove)
 createTabButton("Visual", pageVisual)
 createTabButton("Jogadores", pagePlayers)
 
+-- ==============================================================================
+-- ====== INÍCIO DA CRIAÇÃO DA ABA DE GERADORES ================================
+-- ==============================================================================
+local pageGenerators = createPage("Geradores")
+createTabButton("Geradores", pageGenerators)
+-- ==============================================================================
+-- ====== FIM DA CRIAÇÃO DA ABA DE GERADORES ===================================
+-- ==============================================================================
+
 local function createToggle(page, text, callback)
     local btn = Instance.new("TextButton")
     btn.Parent = page
@@ -334,7 +347,6 @@ local function createToggle(page, text, callback)
     return btn
 end
 
--- AVISO ANTI-BAN INFORMATIVO
 local function createInfoBox(page, text)
     local box = Instance.new("Frame")
     box.Parent = page
@@ -369,8 +381,14 @@ local function createInfoBox(page, text)
 end
 
 createInfoBox(pageMain, "🛡️ Anti-Ban Ativo: Proteção básica contra detecções locais e ocultação de interface.")
+-- ==============================================================================
+-- ====== FIM DO DESIGN E INTERFACE (MENU VISUAL) ==============================
+-- ==============================================================================
 
--- SLIDER DE VELOCIDADE
+
+-- ==============================================================================
+-- ====== INÍCIO SISTEMA DE MOVIMENTO E VELOCIDADE ============================
+-- ==============================================================================
 local currentWalkSpeed = 16
 local function createSlider(page, text, min, max, default, callback)
     local container = Instance.new("Frame")
@@ -448,8 +466,6 @@ local function createSlider(page, text, min, max, default, callback)
     end)
 end
 
--- ==================== SISTEMAS ====================
-
 createSlider(pageMove, "Velocidade", 16, 100, 16, function(value)
     currentWalkSpeed = value
 end)
@@ -464,7 +480,14 @@ task.spawn(function()
         RunService.RenderStepped:Wait()
     end
 end)
+-- ==============================================================================
+-- ====== FIM SISTEMA DE MOVIMENTO E VELOCIDADE ===============================
+-- ==============================================================================
 
+
+-- ==============================================================================
+-- ====== INÍCIO SISTEMA DE ATRAVESSAR PAREDES (NOCLIP) ========================
+-- ==============================================================================
 local noclipConnection = nil
 createToggle(pageMain, "Atravessar Paredes", function(state)
     if state then
@@ -493,8 +516,14 @@ createToggle(pageMain, "Atravessar Paredes", function(state)
         end
     end
 end)
+-- ==============================================================================
+-- ====== FIM SISTEMA DE ATRAVESSAR PAREDES (NOCLIP) ==========================
+-- ==============================================================================
 
--- BRILHO TOTAL PERSISTENTE
+
+-- ==============================================================================
+-- ====== INÍCIO SISTEMA DE BRILHO TOTAL (FULLBRIGHT) ==========================
+-- ==============================================================================
 local brightState = false
 createToggle(pageVisual, "Brilho Total", function(state)
     brightState = state
@@ -514,8 +543,14 @@ task.spawn(function()
         task.wait(1)
     end
 end)
+-- ==============================================================================
+-- ====== FIM SISTEMA DE BRILHO TOTAL (FULLBRIGHT) ============================
+-- ==============================================================================
 
--- ESP JOGADORES PERSISTENTE COM DISTÂNCIA
+
+-- ==============================================================================
+-- ====== INÍCIO SISTEMA DE ESP PLAYERS ======================================
+-- ==============================================================================
 local espState = false
 createToggle(pageVisual, "ESP Jogadores", function(state)
     espState = state
@@ -579,14 +614,20 @@ task.spawn(function()
         task.wait(0.2)
     end
 end)
+-- ==============================================================================
+-- ====== FIM SISTEMA DE ESP PLAYERS ==========================================
+-- ==============================================================================
 
--- ESP DE GERADORES INTELIGENTE (VIOLENCE DISTRICT)
+
+-- ==============================================================================
+-- ====== INÍCIO SISTEMA DE ESP GERADORES =====================================
+-- ==============================================================================
 local generatorEspState = false
 createToggle(pageVisual, "ESP Geradores", function(state)
     generatorEspState = state
     if not state then
         for _, obj in pairs(Workspace:GetDescendants()) do
-            if obj.Name == "GabyGeneratorESP" or obj.Name == "GabyGeneratorName" then
+            if obj.Name == "GenBoxESP" or obj.Name == "GenInfoTag" then
                 obj:Destroy()
             end
         end
@@ -597,66 +638,61 @@ task.spawn(function()
     while true do
         if generatorEspState then
             for _, obj in pairs(Workspace:GetDescendants()) do
-                local isGenerator = false
-                if obj:IsA("Model") then
-                    local nameLower = string.lower(obj.Name)
-                    if string.find(nameLower, "generator") or string.find(nameLower, "motor") or string.find(nameLower, "machine") then
-                        isGenerator = true
-                    else
-                        for _, child in pairs(obj:GetDescendants()) do
-                            if child:IsA("ProximityPrompt") and string.find(string.lower(child.ActionText), "reparar") then
-                                isGenerator = true
-                                break
+                if obj:IsA("Model") or obj:IsA("BasePart") then
+                    if string.lower(obj.Name) == "generator" then
+                        local primaryPart = obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")) or obj
+                        if primaryPart then
+                            if not obj:FindFirstChild("GenBoxESP") then
+                                local hl = Instance.new("Highlight")
+                                hl.Name = "GenBoxESP"
+                                hl.FillColor = Color3.fromRGB(255, 140, 0)
+                                hl.FillTransparency = 0.5
+                                hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                                hl.OutlineTransparency = 0
+                                hl.Parent = obj
+                            end
+                            if not obj:FindFirstChild("GenInfoTag") then
+                                local bg = Instance.new("BillboardGui")
+                                bg.Name = "GenInfoTag"
+                                bg.Adornee = primaryPart
+                                bg.Size = UDim2.new(0, 160, 0, 50)
+                                bg.StudsOffset = Vector3.new(0, 3.5, 0)
+                                bg.AlwaysOnTop = true
+                                bg.Parent = obj
+                                
+                                local txt = Instance.new("TextLabel")
+                                txt.Name = "Text"
+                                txt.Parent = bg
+                                txt.BackgroundTransparency = 1
+                                txt.Size = UDim2.new(1, 0, 1, 0)
+                                txt.Font = Enum.Font.SourceSansBold
+                                txt.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                txt.TextSize = 13
+                                txt.TextStrokeTransparency = 0.3
+                            end
+                            local bg = obj:FindFirstChild("GenInfoTag")
+                            local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                            if bg and localRoot and primaryPart then
+                                local dist = math.floor((primaryPart.Position - localRoot.Position).Magnitude)
+                                local txt = bg:FindFirstChild("Text")
+                                if txt then txt.Text = "⚙️ GERADOR\n[" .. dist .. "m]" end
                             end
                         end
                     end
                 end
-                
-                if isGenerator and not obj:FindFirstChild("GabyGeneratorESP") then
-                    local hl = Instance.new("Highlight")
-                    hl.Name = "GabyGeneratorESP"
-                    hl.FillColor = Color3.fromRGB(255, 140, 0)
-                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                    hl.Parent = obj
-                    
-                    local primaryPart = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
-                    if primaryPart then
-                        local bg = Instance.new("BillboardGui")
-                        bg.Name = "GabyGeneratorName"
-                        bg.Adornee = primaryPart
-                        bg.Size = UDim2.new(0, 120, 0, 40)
-                        bg.StudsOffset = Vector3.new(0, 3, 0)
-                        bg.AlwaysOnTop = true
-                        bg.Parent = obj
-                        
-                        local txt = Instance.new("TextLabel")
-                        txt.Name = "Text"
-                        txt.Parent = bg
-                        txt.BackgroundTransparency = 1
-                        txt.Size = UDim2.new(1, 0, 1, 0)
-                        txt.Font = Enum.Font.SourceSansBold
-                        txt.TextColor3 = Color3.fromRGB(255, 165, 0)
-                        txt.TextSize = 14
-                        txt.TextStrokeTransparency = 0.5
-                    end
-                end
-                
-                local bg = obj:FindFirstChild("GabyGeneratorName")
-                local primaryPart = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")
-                local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if bg and primaryPart and localRoot then
-                    local dist = math.floor((primaryPart.Position - localRoot.Position).Magnitude)
-                    local txt = bg:FindFirstChild("Text")
-                    if txt then
-                        txt.Text = "Gerador [" .. dist .. "m]"
-                    end
-                end
             end
         end
-        task.wait(1)
+        task.wait(0.5)
     end
 end)
+-- ==============================================================================
+-- ====== FIM SISTEMA DE ESP GERADORES ========================================
+-- ==============================================================================
 
+
+-- ==============================================================================
+-- ====== INÍCIO SISTEMA DE UTILITÁRIOS (GODMODE E CÂMERA LIVRE) ===============
+-- ==============================================================================
 createToggle(pageMain, "Vida Infinita (Godmode)", function(state)
     task.spawn(function()
         while state do
@@ -672,7 +708,14 @@ end)
 createToggle(pageVisual, "Câmera Livre", function(state)
     Camera.CameraType = state and Enum.CameraType.Scriptable or Enum.CameraType.Custom
 end)
+-- ==============================================================================
+-- ====== FIM SISTEMA DE UTILITÁRIOS (GODMODE E CÂMERA LIVRE) ==================
+-- ==============================================================================
 
+
+-- ==============================================================================
+-- ====== INÍCIO SISTEMA DE TELEPORTE PARA JOGADORES ==========================
+-- ==============================================================================
 local function refreshPlayerList()
     for _, child in pairs(pagePlayers:GetChildren()) do
         if child:IsA("TextButton") then child:Destroy() end
@@ -712,7 +755,80 @@ end
 Players.PlayerAdded:Connect(refreshPlayerList)
 Players.PlayerRemoving:Connect(refreshPlayerList)
 refreshPlayerList()
+-- ==============================================================================
+-- ====== FIM SISTEMA DE TELEPORTE PARA JOGADORES =============================
+-- ==============================================================================
 
+-- ==============================================================================
+-- ====== INÍCIO SISTEMA DE TELEPORTE PARA GERADORES ============================
+-- ==============================================================================
+local function refreshGeneratorList()
+    -- Limpa os botões antigos da lista para não duplicar
+    for _, child in pairs(pageGenerators:GetChildren()) do
+        if child:IsA("TextButton") then child:Destroy() end
+    end
+    
+    local genCount = 0
+    -- Varre o Workspace procurando todos os geradores ativos
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("Model") or obj:IsA("BasePart") then
+            if string.lower(obj.Name) == "generator" then
+                local primaryPart = obj:IsA("Model") and (obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart")) or obj
+                if primaryPart and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    genCount = genCount + 1
+                    local genId = genCount
+                    
+                    -- Calcula a distância atual para mostrar no botão
+                    local dist = math.floor((primaryPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude)
+                    
+                    local tpBtn = Instance.new("TextButton")
+                    tpBtn.Parent = pageGenerators
+                    tpBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 30)
+                    tpBtn.Size = UDim2.new(1, -5, 0, 35)
+                    tpBtn.Font = Enum.Font.SourceSansSemibold
+                    tpBtn.Text = "⚙️ Gerador #" .. genId .. " [" .. dist .. "m]"
+                    tpBtn.TextColor3 = Color3.fromRGB(255, 220, 230)
+                    tpBtn.TextSize = 13
+                    tpBtn.ZIndex = 2
+                    
+                    local corner = Instance.new("UICorner")
+                    corner.CornerRadius = UDim.new(0, 6)
+                    corner.Parent = tpBtn
+                    
+                    local stroke = Instance.new("UIStroke")
+                    stroke.Color = Color3.fromRGB(255, 105, 180)
+                    stroke.Transparency = 0.3
+                    stroke.Thickness = 1
+                    stroke.Parent = tpBtn
+                    
+                    -- Ação de teleporte ao clicar no botão do gerador
+                    tpBtn.MouseButton1Click:Connect(function()
+                        if primaryPart and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                            LocalPlayer.Character.HumanoidRootPart.CFrame = primaryPart.CFrame + Vector3.new(0, 3, 0)
+                        end
+                    end)
+                end
+            end
+        end
+    end
+end
+
+-- Atualiza a lista automaticamente a cada 2 segundos para acompanhar os geradores
+task.spawn(function()
+    while true do
+        if pageGenerators.Visible then
+            refreshGeneratorList()
+        end
+        task.wait(2)
+    end
+end)
+-- ==============================================================================
+-- ====== FIM SISTEMA DE TELEPORTE PARA GERADORES ===============================
+-- ==============================================================================
+
+-- ==============================================================================
+-- ====== INÍCIO CONTROLE DE TECLAS E ARRASTE DO MENU ==========================
+-- ==============================================================================
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
         setMenuVisible(not MainFrame.Visible)
@@ -765,3 +881,6 @@ ToggleButton.TouchEnded:Connect(function()
         setMenuVisible(not MainFrame.Visible)
     end
 end)
+-- ==============================================================================
+-- ====== FIM CONTROLE DE TECLAS E ARRASTE DO MENU ==============================
+-- ==============================================================================
