@@ -1,6 +1,10 @@
 local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
 
 if CoreGui:FindFirstChild("GabyMenu") then
     CoreGui.GabyMenu:Destroy()
@@ -11,7 +15,6 @@ ScreenGui.Name = "GabyMenu"
 ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Janela Principal (Inicia fechada)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
@@ -32,7 +35,6 @@ UIStrokeMain.Color = Color3.fromRGB(255, 105, 180)
 UIStrokeMain.Thickness = 2
 UIStrokeMain.Parent = MainFrame
 
--- Botão Flutuante Redondo com Imagem
 local ToggleButton = Instance.new("ImageButton")
 ToggleButton.Name = "ToggleButton"
 ToggleButton.Parent = ScreenGui
@@ -51,7 +53,6 @@ UIStrokeBtn.Color = Color3.fromRGB(255, 20, 147)
 UIStrokeBtn.Thickness = 2
 UIStrokeBtn.Parent = ToggleButton
 
--- Imagem de Fundo do Menu
 local BackgroundImage = Instance.new("ImageLabel")
 BackgroundImage.Parent = MainFrame
 BackgroundImage.BackgroundTransparency = 1
@@ -141,7 +142,6 @@ task.spawn(function()
     end
 end)
 
--- Título
 local Title = Instance.new("TextLabel")
 Title.Parent = MainFrame
 Title.BackgroundColor3 = Color3.fromRGB(50, 20, 35)
@@ -162,7 +162,6 @@ UIStrokeTitle.Color = Color3.fromRGB(255, 105, 180)
 UIStrokeTitle.Thickness = 1
 UIStrokeTitle.Parent = Title
 
--- Container de Abas (Lateral Esquerda)
 local TabBar = Instance.new("Frame")
 TabBar.Parent = MainFrame
 TabBar.BackgroundColor3 = Color3.fromRGB(30, 15, 25)
@@ -181,7 +180,6 @@ TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TabListLayout.Padding = UDim.new(0, 5)
 TabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- Container de Páginas (Conteúdo Direita)
 local ContentArea = Instance.new("Frame")
 ContentArea.Parent = MainFrame
 ContentArea.BackgroundTransparency = 1
@@ -249,7 +247,6 @@ createTabButton("Movimento", pageMove)
 createTabButton("Visual", pageVisual)
 createTabButton("Jogadores", pagePlayers)
 
--- Lógica do botão flutuante (Arrastar vs Clicar)
 local dragging = false
 local dragInput, dragStart, startPos
 local touchMoved = false
@@ -297,13 +294,204 @@ ToggleButton.TouchEnded:Connect(function()
     end
 end)
 
-return {
-    ScreenGui = ScreenGui,
-    MainFrame = MainFrame,
-    Pages = {
-        Geral = pageMain,
-        Movimento = pageMove,
-        Visual = pageVisual,
-        Jogadores = pagePlayers
-    }
-}
+-- SISTEMAS
+local function createToggle(page, text, callback)
+    local btn = Instance.new("TextButton")
+    btn.Parent = page
+    btn.BackgroundColor3 = Color3.fromRGB(40, 20, 30)
+    btn.Size = UDim2.new(1, -5, 0, 35)
+    btn.Font = Enum.Font.SourceSansSemibold
+    btn.Text = text .. ": [OFF]"
+    btn.TextColor3 = Color3.fromRGB(255, 220, 230)
+    btn.TextSize = 14
+    btn.ZIndex = 2
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 105, 180)
+    stroke.Transparency = 0.3
+    stroke.Thickness = 1
+    stroke.Parent = btn
+    
+    local state = false
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        btn.Text = text .. (state and ": [ON]" or ": [OFF]")
+        btn.BackgroundColor3 = state and Color3.fromRGB(180, 50, 95) or Color3.fromRGB(40, 20, 30)
+        stroke.Color = state and Color3.fromRGB(255, 20, 147) or Color3.fromRGB(255, 105, 180)
+        callback(state)
+    end)
+    return btn
+end
+
+createToggle(pageMove, "Super Velocidade", function(state)
+    task.spawn(function()
+        while true do
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                if state then
+                    hum.WalkSpeed = 100
+                else
+                    if hum.WalkSpeed == 100 then
+                        hum.WalkSpeed = 16
+                    end
+                    break
+                end
+            end
+            task.run(RunService.RenderStepped)
+        end
+    end)
+end)
+
+createToggle(pageMove, "Super Pulo", function(state)
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        hum.UseJumpPower = true
+        hum.JumpPower = state and 120 or 50
+    end
+end)
+
+local infJumpEnabled = false
+createToggle(pageMove, "Pulo Infinito", function(state)
+    infJumpEnabled = state
+end)
+UserInputService.JumpRequest:Connect(function()
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if infJumpEnabled and hum then
+        hum:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+local flyEnabled = false
+createToggle(pageMove, "Modo Voo (Fly)", function(state)
+    flyEnabled = state
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    
+    if not root or not hum then return end
+    
+    if flyEnabled then
+        hum.PlatformStand = true
+        task.spawn(function()
+            while flyEnabled and char and root and hum.Parent do
+                local moveDir = Vector3.new()
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDir = moveDir + Camera.CFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDir = moveDir - Camera.CFrame.LookVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDir = moveDir - Camera.CFrame.RightVector end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDir = moveDir + Camera.CFrame.RightVector end
+                
+                if moveDir.Magnitude > 0 then
+                    root.AssemblyLinearVelocity = moveDir.Unit * 50
+                else
+                    root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                end
+                RunService.RenderStepped:Wait()
+            end
+            hum.PlatformStand = false
+            if root then root.AssemblyLinearVelocity = Vector3.new(0, 0, 0) end
+        end)
+    else
+        hum.PlatformStand = false
+    end
+end)
+
+createToggle(pageMain, "Atravessar Paredes", function(state)
+    task.spawn(function()
+        while state do
+            local char = LocalPlayer.Character
+            if char then
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then part.CanCollide = false end
+                end
+            end
+            RunService.Stepped:Wait()
+        end
+    end)
+end)
+
+createToggle(pageVisual, "Brilho Total", function(state)
+    game.Lighting.Brightness = state and 2 or 1
+    game.Lighting.GlobalShadows = not state
+    game.Lighting.ClockTime = state and 14 or 12
+end)
+
+createToggle(pageVisual, "ESP Jogadores", function(state)
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            if state then
+                if not p.Character:FindFirstChild("GabyESP") then
+                    local hl = Instance.new("Highlight")
+                    hl.Name = "GabyESP"
+                    hl.FillColor = Color3.fromRGB(255, 105, 180)
+                    hl.OutlineColor = Color3.fromRGB(255, 255, 255)
+                    hl.Parent = p.Character
+                end
+            else
+                if p.Character:FindFirstChild("GabyESP") then
+                    p.Character.GabyESP:Destroy()
+                end
+            end
+        end
+    end
+end)
+
+createToggle(pageMain, "Vida Infinita (Godmode)", function(state)
+    task.spawn(function()
+        while state do
+            local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if hum then
+                hum.Health = hum.MaxHealth
+            end
+            RunService.RenderStepped:Wait()
+        end
+    end)
+end)
+
+createToggle(pageVisual, "Câmera Livre", function(state)
+    Camera.CameraType = state and Enum.CameraType.Scriptable or Enum.CameraType.Custom
+end)
+
+local function refreshPlayerList()
+    for _, child in pairs(pagePlayers:GetChildren()) do
+        if child:IsA("TextButton") then child:Destroy() end
+    end
+    
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer then
+            local tpBtn = Instance.new("TextButton")
+            tpBtn.Parent = pagePlayers
+            tpBtn.BackgroundColor3 = Color3.fromRGB(40, 20, 30)
+            tpBtn.Size = UDim2.new(1, -5, 0, 35)
+            tpBtn.Font = Enum.Font.SourceSansSemibold
+            tpBtn.Text = "Teleportar para: " .. p.Name
+            tpBtn.TextColor3 = Color3.fromRGB(255, 220, 230)
+            tpBtn.TextSize = 13
+            tpBtn.ZIndex = 2
+            
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(0, 6)
+            corner.Parent = tpBtn
+            
+            local stroke = Instance.new("UIStroke")
+            stroke.Color = Color3.fromRGB(255, 105, 180)
+            stroke.Transparency = 0.3
+            stroke.Thickness = 1
+            stroke.Parent = tpBtn
+            
+            tpBtn.MouseButton1Click:Connect(function()
+                if p.Character and p.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    LocalPlayer.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0)
+                end
+            end)
+        end
+    end
+end
+
+Players.PlayerAdded:Connect(refreshPlayerList)
+Players.PlayerRemoving:Connect(refreshPlayerList)
+refreshPlayerList()
