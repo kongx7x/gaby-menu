@@ -219,3 +219,4 @@ return function(UIModule)
     Players.PlayerRemoving:Connect(refreshPlayerList)
     refreshPlayerList()
 end
+
