@@ -172,7 +172,7 @@ TabBar.Parent = MainFrame
 TabBar.BackgroundColor3 = Color3.fromRGB(30, 15, 25)
 TabBar.BackgroundTransparency = 0.4
 TabBar.Position = UDim2.new(0, 10, 0, 50)
-TabBar.Size = UDim2.new(0, 110, 1, -60)
+TabBar.Size = UDim2.new(0, 110, 1, -100) -- Ajustado para dar espaço ao perfil embaixo
 TabBar.ZIndex = 2
 
 local UICornerTab = Instance.new("UICorner")
@@ -184,6 +184,42 @@ TabListLayout.Parent = TabBar
 TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TabListLayout.Padding = UDim.new(0, 5)
 TabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+-- ==================== [NOVO: PASSO 5] PERFIL DO USUÁRIO NO MENU ====================
+local UserProfileFrame = Instance.new("Frame")
+UserProfileFrame.Parent = MainFrame
+UserProfileFrame.BackgroundColor3 = Color3.fromRGB(30, 15, 25)
+UserProfileFrame.BackgroundTransparency = 0.4
+UserProfileFrame.Position = UDim2.new(0, 10, 1, -45)
+UserProfileFrame.Size = UDim2.new(0, 110, 0, 35)
+UserProfileFrame.ZIndex = 2
+
+local UserProfileCorner = Instance.new("UICorner")
+UserProfileCorner.CornerRadius = UDim.new(0, 8)
+UserProfileCorner.Parent = UserProfileFrame
+
+local UserAvatar = Instance.new("ImageLabel")
+UserAvatar.Parent = UserProfileFrame
+UserAvatar.BackgroundTransparency = 1
+UserAvatar.Position = UDim2.new(0, 3, 0, 3)
+UserAvatar.Size = UDim2.new(0, 29, 0, 29)
+UserAvatar.ZIndex = 2
+pcall(function()
+    UserAvatar.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size420x420)
+end)
+
+local UserNameLabel = Instance.new("TextLabel")
+UserNameLabel.Parent = UserProfileFrame
+UserNameLabel.BackgroundTransparency = 1
+UserNameLabel.Position = UDim2.new(0, 35, 0, 0)
+UserNameLabel.Size = UDim2.new(1, -38, 1, 0)
+UserNameLabel.Font = Enum.Font.SourceSansBold
+UserNameLabel.Text = LocalPlayer.Name
+UserNameLabel.TextColor3 = Color3.fromRGB(255, 220, 230)
+UserNameLabel.TextSize = 11
+UserNameLabel.ZIndex = 2
+UserNameLabel.TextXAlignment = Enum.TextXAlignment.Left
+UserNameLabel.TextTruncate = Enum.TextTruncate.AtEnd
 
 -- Container de Páginas
 local ContentArea = Instance.new("Frame")
@@ -426,7 +462,6 @@ createToggle(pageMove, "Modo Voo (Fly)", function(state)
     end
 end)
 
--- [CORRIGIDO] ATRAVESSAR PAREDES (NOCLIP COM RESTAURAÇÃO IMEDIATA)
 local noclipConnection = nil
 createToggle(pageMain, "Atravessar Paredes", function(state)
     if state then
@@ -445,7 +480,6 @@ createToggle(pageMain, "Atravessar Paredes", function(state)
             noclipConnection:Disconnect()
             noclipConnection = nil
         end
-        -- Devolve a colisão real instantaneamente para o personagem
         local char = LocalPlayer.Character
         if char then
             for _, part in pairs(char:GetDescendants()) do
@@ -538,6 +572,13 @@ end
 Players.PlayerAdded:Connect(refreshPlayerList)
 Players.PlayerRemoving:Connect(refreshPlayerList)
 refreshPlayerList()
+
+-- ==================== [NOVO: PASSO 4] TECLA DE ATALHO (RIGHT SHIFT) ====================
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.RightShift then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
 
 -- Sistema anti-conflito para arrastar vs tocar no celular
 local dragging = false
