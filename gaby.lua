@@ -15,7 +15,7 @@ ScreenGui.Name = "GabyMenu"
 ScreenGui.Parent = CoreGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Janela Principal (Inicia fechada por padrão)
+-- Janela Principal
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
@@ -36,7 +36,7 @@ UIStrokeMain.Color = Color3.fromRGB(255, 105, 180)
 UIStrokeMain.Thickness = 2
 UIStrokeMain.Parent = MainFrame
 
--- Botão Flutuante Redondo com Imagem
+-- Botão Flutuante
 local ToggleButton = Instance.new("ImageButton")
 ToggleButton.Name = "ToggleButton"
 ToggleButton.Parent = ScreenGui
@@ -55,7 +55,7 @@ UIStrokeBtn.Color = Color3.fromRGB(255, 20, 147)
 UIStrokeBtn.Thickness = 2
 UIStrokeBtn.Parent = ToggleButton
 
--- Imagem de Fundo do Menu (com transparência)
+-- Imagem de Fundo
 local BackgroundImage = Instance.new("ImageLabel")
 BackgroundImage.Parent = MainFrame
 BackgroundImage.BackgroundTransparency = 1
@@ -68,7 +68,7 @@ local UICornerBg = Instance.new("UICorner")
 UICornerBg.CornerRadius = UDim.new(0, 12)
 UICornerBg.Parent = BackgroundImage
 
--- Efeito 3D Estilo Teia de Aranha / Partículas Conectadas
+-- Efeito 3D Teia de Aranha
 local WebContainer = Instance.new("Folder")
 WebContainer.Name = "WebEffect"
 WebContainer.Parent = MainFrame
@@ -116,10 +116,8 @@ task.spawn(function()
         for _, n in ipairs(nodes) do
             n.posX = n.posX + n.dirX
             n.posY = n.posY + n.dirY
-            
             if n.posX < 10 or n.posX > 410 then n.dirX = -n.dirX end
             if n.posY < 45 or n.posY > 340 then n.dirY = -n.dirY end
-            
             n.object.Position = UDim2.new(0, n.posX, 0, n.posY)
         end
         
@@ -130,25 +128,19 @@ task.spawn(function()
                     local n1, n2 = nodes[i], nodes[j]
                     local dx, dy = n2.posX - n1.posX, n2.posY - n1.posY
                     local dist = mathSqrt(dx*dx + dy*dy)
-                    
                     if dist < 80 then
                         local line = lines[lineIdx]
                         line.Visible = true
                         line.Size = UDim2.new(0, dist, 0, 1)
                         line.Position = UDim2.new(0, n1.posX, 0, n1.posY)
-                        local angle = math.atan2(dy, dx)
-                        line.Rotation = math.deg(angle)
+                        line.Rotation = math.deg(math.atan2(dy, dx))
                         line.BackgroundTransparency = mathMin(0.3 + (dist / 100), 0.9)
                         lineIdx = lineIdx + 1
                     end
                 end
             end
         end
-        
-        for k = lineIdx, #lines do
-            lines[k].Visible = false
-        end
-        
+        for k = lineIdx, #lines do lines[k].Visible = false end
         RunService.RenderStepped:Wait()
     end
 end)
@@ -174,7 +166,7 @@ UIStrokeTitle.Color = Color3.fromRGB(255, 105, 180)
 UIStrokeTitle.Thickness = 1
 UIStrokeTitle.Parent = Title
 
--- Container de Abas (Menu Lateral Esquerdo)
+-- Container de Abas
 local TabBar = Instance.new("Frame")
 TabBar.Parent = MainFrame
 TabBar.BackgroundColor3 = Color3.fromRGB(30, 15, 25)
@@ -193,7 +185,7 @@ TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 TabListLayout.Padding = UDim.new(0, 5)
 TabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 
--- Container de Páginas (Conteúdo Direita)
+-- Container de Páginas
 local ContentArea = Instance.new("Frame")
 ContentArea.Parent = MainFrame
 ContentArea.BackgroundTransparency = 1
@@ -227,7 +219,6 @@ local pageMain = createPage("Geral")
 local pageMove = createPage("Movimento")
 local pageVisual = createPage("Visual")
 local pagePlayers = createPage("Jogadores")
-
 pages["Geral"].Visible = true
 
 local function createTabButton(name, targetPage)
@@ -294,24 +285,90 @@ local function createToggle(page, text, callback)
     return btn
 end
 
+-- ==================== [NOVO: PASSO 2] SLIDER DE VELOCIDADE (0 a 100) ====================
+local function createSlider(page, text, min, max, default, callback)
+    local container = Instance.new("Frame")
+    container.Parent = page
+    container.BackgroundColor3 = Color3.fromRGB(40, 20, 30)
+    container.Size = UDim2.new(1, -5, 0, 50)
+    container.ZIndex = 2
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = container
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = Color3.fromRGB(255, 105, 180)
+    stroke.Transparency = 0.3
+    stroke.Thickness = 1
+    stroke.Parent = container
+    
+    local label = Instance.new("TextLabel")
+    label.Parent = container
+    label.BackgroundTransparency = 1
+    label.Position = UDim2.new(0, 10, 0, 5)
+    label.Size = UDim2.new(1, -20, 0, 20)
+    label.Font = Enum.Font.SourceSansSemibold
+    label.Text = text .. ": " .. default
+    label.TextColor3 = Color3.fromRGB(255, 220, 230)
+    label.TextSize = 14
+    label.ZIndex = 2
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local sliderBar = Instance.new("TextButton")
+    sliderBar.Parent = container
+    sliderBar.BackgroundColor3 = Color3.fromRGB(60, 30, 45)
+    sliderBar.Position = UDim2.new(0, 10, 0, 30)
+    sliderBar.Size = UDim2.new(1, -20, 0, 10)
+    sliderBar.Text = ""
+    sliderBar.ZIndex = 2
+    
+    local barCorner = Instance.new("UICorner")
+    barCorner.CornerRadius = UDim.new(1, 0)
+    barCorner.Parent = sliderBar
+    
+    local fill = Instance.new("Frame")
+    fill.Parent = sliderBar
+    fill.BackgroundColor3 = Color3.fromRGB(255, 105, 180)
+    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    fill.ZIndex = 2
+    
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(1, 0)
+    fillCorner.Parent = fill
+    
+    local draggingSlider = false
+    sliderBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            draggingSlider = true
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            draggingSlider = false
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if draggingSlider and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local pos = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
+            fill.Size = UDim2.new(pos, 0, 1, 0)
+            local val = math.floor(min + ((max - min) * pos))
+            label.Text = text .. ": " .. val
+            callback(val)
+        end
+    end)
+end
+
 -- ==================== SISTEMAS ====================
 
-createToggle(pageMove, "Super Velocidade", function(state)
+createSlider(pageMove, "Velocidade", 16, 100, 16, function(value)
     task.spawn(function()
-        while true do
-            local char = LocalPlayer.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if hum then
-                if state then
-                    hum.WalkSpeed = 100
-                else
-                    if hum.WalkSpeed == 100 then
-                        hum.WalkSpeed = 16
-                    end
-                    break
-                end
-            end
-            task.run(RunService.RenderStepped)
+        local char = LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.WalkSpeed = value
         end
     end)
 end)
@@ -369,6 +426,7 @@ createToggle(pageMove, "Modo Voo (Fly)", function(state)
     end
 end)
 
+-- ==================== [NOVO: PASSO 1] CORREÇÃO DO ATRAVESSAR PAREDES (NOCLIP) ====================
 createToggle(pageMain, "Atravessar Paredes", function(state)
     task.spawn(function()
         while state do
@@ -379,6 +437,13 @@ createToggle(pageMain, "Atravessar Paredes", function(state)
                 end
             end
             RunService.Stepped:Wait()
+        end
+        -- Quando desliga, devolve a colisão real para o personagem
+        local char = LocalPlayer.Character
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide = true end
+            end
         end
     end)
 end)
@@ -501,7 +566,6 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Clique limpo que diferencia o arrasto do toque de fechar/abrir
 ToggleButton.MouseButton1Up:Connect(function()
     if not touchMoved then
         MainFrame.Visible = not MainFrame.Visible
