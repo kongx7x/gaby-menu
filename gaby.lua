@@ -386,16 +386,6 @@ createInfoBox(pageMain, "🛡️ Anti-Ban Ativo: Proteção básica contra detec
 -- ==============================================================================
 
 -- ==============================================================================
--- ====== INÍCIO ADIÇÃO DO BOTÃO REACH / HITBOX NO MENU =========================
--- ==============================================================================
-createToggle(pageMove, "Alcance de Hit Expandido", function(state)
-    _G.ExtendedReach = state
-end)
--- ==============================================================================
--- ====== FIM ADIÇÃO DO BOTÃO REACH / HITBOX NO MENU ===========================
--- ==============================================================================
-
--- ==============================================================================
 -- ====== INÍCIO SISTEMA DE MOVIMENTO E VELOCIDADE ============================
 -- ==============================================================================
 local currentWalkSpeed = 16
@@ -739,36 +729,53 @@ end)
 -- ==============================================================================
 
 -- ==============================================================================
--- ====== INÍCIO SISTEMA DE ALCANCE ESTENDIDO DE HIT (REACH) ===================
+-- ====== INÍCIO SISTEMA COMPLETO DE ALCANCE ESTENDIDO DE HIT (REACH) ===========
 -- ==============================================================================
 _G.ExtendedReach = false
+_G.ReachSize = 5 -- Tamanho padrão inicial do alcance
 
+-- Cria o botão de ativação na aba Movimento
+createToggle(pageMove, "Alcance de Hit Expandido", function(state)
+    _G.ExtendedReach = state
+end)
+
+-- Cria o Slider para controlar o tamanho do alcance (de 3 até 15) na aba Movimento
+createSlider(pageMove, "Tamanho do Alcance", 3, 15, 5, function(val)
+    _G.ReachSize = val
+end)
+
+-- Sistema inteligente para forçar o hitbox da arma/faca a funcionar
 task.spawn(function()
     while true do
         if _G.ExtendedReach then
             pcall(function()
                 local char = LocalPlayer.Character
                 if char then
-                    -- Procura por ferramentas equipadas (faca, espada, etc.)
                     local tool = char:FindFirstChildOfClass("Tool")
                     if tool then
-                        for _, part in pairs(tool:GetDescendants()) do
-                            if part:IsA("BasePart") then
-                                -- Expande temporariamente o tamanho da hitbox da arma para facilitar o hit
-                                part.Size = Vector3.new(4, 4, 4)
-                                part.Transparency = 0.9 -- Quase invisível, mas ativa o contato físico/hit
-                                part.CanCollide = false
+                        local handle = tool:FindFirstChild("Handle") or tool:FindFirstChildWhichIsA("BasePart")
+                        if handle then
+                            handle.Size = Vector3.new(_G.ReachSize, _G.ReachSize, _G.ReachSize)
+                            handle.Transparency = 0.85
+                            handle.CanCollide = false
+                            
+                            for _, part in pairs(tool:GetDescendants()) do
+                                if part:IsA("BasePart") and part ~= handle then
+                                    part.Size = Vector3.new(_G.ReachSize, _G.ReachSize, _G.ReachSize)
+                                    part.Transparency = 0.85
+                                    part.CanCollide = false
+                                end
                             end
                         end
                     end
                 end
             end)
         end
-        task.wait(0.5)
+        task.wait(0.2)
     end
 end)
 -- ==============================================================================
--- ====== FIM SISTEMA DE ALCANCE ESTENDIDO DE HIT (REACH) ======================
+-- ====== FIM SISTEMA COMPLETO DE ALCANCE ESTENDIDO DE HIT (REACH) ==============
 -- ==============================================================================
 
 -- ==============================================================================
